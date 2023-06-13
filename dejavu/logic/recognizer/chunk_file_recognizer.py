@@ -10,25 +10,31 @@ class ChunkFileRecognizer:
 
     def recognize_file(self, file_path):
         # Cargamos el archivo de audio y lo dividimos en fragmentos
-        chunks = self.load_and_split_audio(file_path, chunk_duration=10, overlap=5)
+        chunks, chunk_times = self.load_and_split_audio(file_path, chunk_duration=10, overlap=5)
 
         # Procesamos cada fragmento
         results = []
         recognizer = FileRecognizer(self.dejavu)
-        for chunk in chunks:
+        for chunk, chunk_time in zip(chunks, chunk_times):
             result = recognizer.recognize(chunk)
-            results.append(result)
+            result["chunk_start_time"] = chunk_time[0]
+            result["chunk_end_time"] = chunk_time[1]
 
-        return results
+            # Calcula la ubicación de inicio para cada coincidencia
+            for match in result["results"]:
+                match_start = chunk_time[0] + match["offset_seconds"]
+                match["match_start_time"] = match_start
+
+            results.append(result)
 
     def load_and_split_audio(self, file_path, chunk_duration, overlap):
         # Cargamos el archivo de audio
         y, sr = librosa.load(file_path)
 
         # Dividimos en chunks de la duración deseada con la superposición deseada
-        chunks = self.split_into_chunks(y, sr, chunk_duration, overlap)
+        chunks, chunk_times = self.split_into_chunks(y, sr, chunk_duration, overlap)
 
-        return chunks
+        return chunks, chunk_times
 
     def split_into_chunks(self, y, sr, chunk_duration, overlap):
         frames_per_chunk = chunk_duration * sr
@@ -40,4 +46,11 @@ class ChunkFileRecognizer:
         # Convertimos cada frame a una lista de chunks de audio
         chunks = chunks.transpose()
 
-        return [chunk for chunk in chunks]
+        # Crear los tiempos de inicio y fin para cada chunk
+        chunk_times = []
+        for i in range(chunks.shape[0]):
+            start_time = i * overlap  # Tiempo de inicio en segundos
+            end_time = start_time + chunk_duration  # Tiempo de finalización en segundos
+            chunk_times.append((start_time, end_time))
+
+        return [chunk for chunk in chunks], chunk_times
