@@ -1,18 +1,18 @@
 import numpy as np
-import pyaudio
+# import pyaudio
 
 from dejavu.base_classes.base_recognizer import BaseRecognizer
 
 
 class MicrophoneRecognizer(BaseRecognizer):
     default_chunksize = 8192
-    default_format = pyaudio.paInt16
+    default_format = 0 # pyaudio.paInt16
     default_channels = 2
     default_samplerate = 44100
 
     def __init__(self, dejavu):
         super().__init__(dejavu)
-        self.audio = pyaudio.PyAudio()
+        self.audio = None # pyaudio.PyAudio()
         self.stream = None
         self.data = []
         self.channels = MicrophoneRecognizer.default_channels
@@ -29,7 +29,7 @@ class MicrophoneRecognizer(BaseRecognizer):
         self.recorded = False
         self.samplerate = samplerate
 
-        if self.stream:
+        """ if self.stream:
             self.stream.stop_stream()
             self.stream.close()
 
@@ -39,7 +39,7 @@ class MicrophoneRecognizer(BaseRecognizer):
             rate=samplerate,
             input=True,
             frames_per_buffer=chunksize,
-        )
+        ) """
 
         self.data = [[] for i in range(channels)]
 
@@ -67,7 +67,7 @@ class MicrophoneRecognizer(BaseRecognizer):
         return len(self.data[0]) / self.rate
 
     def recognize(self, seconds=10):
-        self.start_recording()
+        # self.start_recording()
         for i in range(0, int(self.samplerate / self.chunksize * int(seconds))):
             self.process_recording()
         self.stop_recording()
