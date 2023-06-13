@@ -1,7 +1,7 @@
 import queue
 
-import mysql.connector
-from mysql.connector.errors import DatabaseError
+import pymysql
+from pymysql.err import DatabaseError
 
 from dejavu.base_classes.common_database import CommonDatabase
 from dejavu.config.settings import (FIELD_FILE_SHA1, FIELD_FINGERPRINTED,
@@ -124,8 +124,6 @@ class MySQLDatabase(CommonDatabase):
         self._options = options
 
     def after_fork(self) -> None:
-        # Clear the cursor cache, we don't want any stale connections from
-        # the previous process.
         Cursor.clear_cache()
 
     def insert_song(self, song_name: str, file_hash: str, total_hashes: int) -> int:
@@ -172,10 +170,8 @@ class Cursor(object):
 
         try:
             conn = self._cache.get_nowait()
-            # Ping the connection before using it from the cache.
-            conn.ping(True)
         except queue.Empty:
-            conn = mysql.connector.connect(**options)
+            conn = pymysql.connect(**options)
 
         self.conn = conn
         self.dictionary = dictionary
@@ -185,18 +181,16 @@ class Cursor(object):
         cls._cache = queue.Queue(maxsize=5)
 
     def __enter__(self):
-        self.cursor = self.conn.cursor(dictionary=self.dictionary)
+        self.cursor = self.conn.cursor(pymysql.cursors.DictCursor) if self.dictionary else self.conn.cursor()
         return self.cursor
 
     def __exit__(self, extype, exvalue, traceback):
-        # if we had a MySQL related error we try to rollback the cursor.
         if extype is DatabaseError:
-            self.cursor.rollback()
+            self.conn.rollback()
 
         self.cursor.close()
         self.conn.commit()
 
-        # Put it back on the queue
         try:
             self._cache.put_nowait(self.conn)
         except queue.Full:
