@@ -31,9 +31,10 @@ class CommonDatabase(BaseDatabase, metaclass=abc.ABCMeta):
         Called on creation or shortly afterwards.
         """
         with self.cursor() as cur:
-            cur.execute(self.CREATE_SONGS_TABLE)
-            cur.execute(self.CREATE_FINGERPRINTS_TABLE)
-            cur.execute(self.DELETE_UNFINGERPRINTED)
+            ## TODO: OJO no jesus
+            # cur.execute(self.CREATE_SONGS_TABLE)
+            # cur.execute(self.CREATE_FINGERPRINTS_TABLE)
+            # cur.execute(self.DELETE_UNFINGERPRINTED)
 
     def empty(self) -> None:
         """
