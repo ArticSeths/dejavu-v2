@@ -230,11 +230,13 @@ class Dejavu:
         # Pool.imap sends arguments as tuples so we have to unpack
         # them ourself.
         try:
-            file_name, limit = arguments
+            if len(arguments) == 3:
+                file_name, limit, song_name = arguments
+            else:
+                file_name, limit = arguments
+                song_name, _ = os.path.splitext(os.path.basename(file_name))
         except ValueError:
             pass
-
-        song_name, extension = os.path.splitext(os.path.basename(file_name))
 
         fingerprints, file_hash = Dejavu.get_file_fingerprints(file_name, limit, print_output=True)
 
