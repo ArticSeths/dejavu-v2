@@ -11,7 +11,7 @@ from dejavu.base_classes.base_database import get_database
 from dejavu.config.settings import (DEFAULT_FS, DEFAULT_OVERLAP_RATIO,
                                     DEFAULT_WINDOW_SIZE, FIELD_FILE_SHA1,
                                     FIELD_TOTAL_HASHES, FIELD_AUDIO_DURATION,
-                                    FINGERPRINTED_CONFIDENCE,
+                                    FINGERPRINTED_CONFIDENCE, AUDIO_DURATION,
                                     FINGERPRINTED_HASHES, HASHES_MATCHED,
                                     INPUT_CONFIDENCE, INPUT_HASHES, OFFSET,
                                     OFFSET_SECS, SONG_ID, SONG_NAME, TOPN)
@@ -206,6 +206,7 @@ class Dejavu:
                 SONG_NAME: song_name.encode("utf8"),
                 INPUT_HASHES: queried_hashes,
                 FINGERPRINTED_HASHES: song_hashes,
+                AUDIO_DURATION: song_duration,
                 HASHES_MATCHED: hashes_matched,
                 # Percentage regarding hashes matched vs hashes from the input.
                 INPUT_CONFIDENCE: round(hashes_matched / queried_hashes, 2),
