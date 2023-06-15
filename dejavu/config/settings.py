@@ -19,6 +19,7 @@ INPUT_HASHES = 'input_total_hashes'
 INPUT_CONFIDENCE = 'input_confidence'
 
 TOTAL_TIME = 'total_time'
+AUDIO_DURATION = 'audio_duration'
 FINGERPRINT_TIME = 'fingerprint_time'
 QUERY_TIME = 'query_time'
 ALIGN_TIME = 'align_time'
