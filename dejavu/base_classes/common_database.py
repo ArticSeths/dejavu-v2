@@ -184,7 +184,7 @@ class CommonDatabase(BaseDatabase, metaclass=abc.ABCMeta):
                         ,   `{FIELD_OFFSET}`)
                     VALUES {batch_values_query};
                 """
-                cur.execute(query, batch_values)
+                cur.execute(query, sum(batch_values, ()))
         # METODO ANTIGUO
         """ with self.cursor() as cur:
             for index in range(0, len(hashes), batch_size):
