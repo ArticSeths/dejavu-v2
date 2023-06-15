@@ -1,21 +1,21 @@
 # Dejavu
 import os
 
-# DEJAVU JSON RESPONSE
+# RESPUESTA JSON DE DEJAVU
 SONG_ID = "song_id"
 SONG_NAME = 'song_name'
 RESULTS = 'results'
 
 HASHES_MATCHED = 'hashes_matched_in_input'
 
-# Hashes fingerprinted in the db.
+# Huellas digitalizadas en la base de datos.
 FINGERPRINTED_HASHES = 'fingerprinted_hashes_in_db'
-# Percentage regarding hashes matched vs hashes fingerprinted in the db.
+# Porcentaje referente a las huellas coincidentes vs las huellas digitalizadas en la base de datos.
 FINGERPRINTED_CONFIDENCE = 'fingerprinted_confidence'
 
-# Hashes generated from the input.
+# Huellas generadas desde la entrada.
 INPUT_HASHES = 'input_total_hashes'
-# Percentage regarding hashes matched vs hashes from the input.
+# Porcentaje referente a las huellas coincidentes vs las huellas de la entrada.
 INPUT_CONFIDENCE = 'input_confidence'
 
 TOTAL_TIME = 'total_time'
@@ -25,79 +25,80 @@ ALIGN_TIME = 'align_time'
 OFFSET = 'offset'
 OFFSET_SECS = 'offset_seconds'
 
-# DATABASE CLASS INSTANCES:
+# INSTANCIAS DE CLASES DE BASE DE DATOS:
 DATABASES = {
     'mysql': ("dejavu.database_handler.mysql_database", "MySQLDatabase"),
 }
 # 'postgres': ("dejavu.database_handler.postgres_database", "PostgreSQLDatabase")
 
-# TABLE SONGS
+# TABLA SONGS
 SONGS_TABLENAME = "songs"
 
-# SONGS FIELDS
+# CAMPOS DE SONGS
 FIELD_SONG_ID = 'song_id'
 FIELD_SONGNAME = 'song_name'
 FIELD_FINGERPRINTED = "fingerprinted"
 FIELD_FILE_SHA1 = 'file_sha1'
 FIELD_TOTAL_HASHES = 'total_hashes'
+FIELD_AUDIO_DURATION = 'duration'
 
-# TABLE FINGERPRINTS
+# TABLA FINGERPRINTS
 FINGERPRINTS_TABLENAME = "fingerprints"
 
-# FINGERPRINTS FIELDS
+# CAMPOS DE FINGERPRINTS
 FIELD_HASH = 'hash'
 FIELD_OFFSET = 'offset'
 
-# FINGERPRINTS CONFIG:
-# This is used as connectivity parameter for scipy.generate_binary_structure function. This parameter
-# changes the morphology mask when looking for maximum peaks on the spectrogram matrix.
-# Possible values are: [1, 2]
-# Where 1 sets a diamond morphology which implies that diagonal elements are not considered as neighbors (this
-# is the value used in the original dejavu code).
-# And 2 sets a square mask, i.e. all elements are considered neighbors.
+# CONFIGURACIÓN DE FINGERPRINTS:
+# Esto se utiliza como parámetro de conectividad para la función scipy.generate_binary_structure. Este parámetro
+# cambia la máscara de morfología al buscar los picos máximos en la matriz del espectrograma.
+# Los valores posibles son: [1, 2]
+# Donde 1 establece una morfología de diamante, lo que implica que los elementos diagonales no se consideran vecinos (este
+# es el valor utilizado en el código original de dejavu).
+# Y 2 establece una máscara cuadrada, es decir, todos los elementos son considerados vecinos.
 CONNECTIVITY_MASK = int(os.getenv('DJV_CONNECTIVITY_MASK', 2))
 
-# Sampling rate, related to the Nyquist conditions, which affects
-# the range frequencies we can detect.
+# Tasa de muestreo, relacionada con las condiciones de Nyquist, que afecta
+# el rango de frecuencias que podemos detectar.
 DEFAULT_FS = int(os.getenv('DJV_DEFAULT_FS', 44100))
 
-# Size of the FFT window, affects frequency granularity
+# Tamaño de la ventana FFT, afecta la granularidad de la frecuencia
 DEFAULT_WINDOW_SIZE = 4096
 
-# Ratio by which each sequential window overlaps the last and the
-# next window. Higher overlap will allow a higher granularity of offset
-# matching, but potentially more fingerprints.
+# Relación por la cual cada ventana secuencial se superpone con la última y la
+# próxima ventana. Una superposición mayor permitirá una mayor granularidad en el desplazamiento
+# correspondiente, pero potencialmente más huellas digitales.
 DEFAULT_OVERLAP_RATIO = 0.5
 
-# Degree to which a fingerprint can be paired with its neighbors. Higher values will
-# cause more fingerprints, but potentially better accuracy.
-DEFAULT_FAN_VALUE = 5  # 15 was the original value.
+# Grado en el que una huella digital puede emparejarse con sus vecinos. Valores más altos darán lugar a
+# más huellas digitales, pero potencialmente mejor precisión.
+DEFAULT_FAN_VALUE = int(os.getenv('DJV_DEFAULT_FAN_VALUE', 15))  # 15 era el valor original.
 
-# Minimum amplitude in spectrogram in order to be considered a peak.
-# This can be raised to reduce number of fingerprints, but can negatively
-# affect accuracy.
+# Amplitud mínima en el espectrograma para ser considerado un pico.
+# Esto puede aumentarse para reducir el número de huellas digitales, pero puede afectar negativamente
+# la precisión.
 DEFAULT_AMP_MIN = 10
 
-# Number of cells around an amplitude peak in the spectrogram in order
-# for Dejavu to consider it a spectral peak. Higher values mean less
-# fingerprints and faster matching, but can potentially affect accuracy.
-PEAK_NEIGHBORHOOD_SIZE = 10  # 20 was the original value.
+# Número de celdas alrededor de un pico de amplitud en el espectrograma para
+# que Dejavu lo considere un pico espectral. Valores más altos significan menos
+# huellas digitales y emparejamiento más rápido, pero pueden afectar potencialmente la precisión.
+PEAK_NEIGHBORHOOD_SIZE = 10  # 20 era el valor original.
 
-# Thresholds on how close or far fingerprints can be in time in order
-# to be paired as a fingerprint. If your max is too low, higher values of
-# DEFAULT_FAN_VALUE may not perform as expected.
+# Umbrales de cuán cerca o lejos pueden estar las huellas digitales en el tiempo para
+# ser emparejadas como una huella digital. Si tu máximo es demasiado bajo, los valores más altos de
+# DEFAULT_FAN_VALUE pueden no funcionar como se esperaba.
 MIN_HASH_TIME_DELTA = 0
 MAX_HASH_TIME_DELTA = 200
 
-# If True, will sort peaks temporally for fingerprinting;
-# not sorting will cut down number of fingerprints, but potentially
-# affect performance.
+# Si es True, ordenará los picos temporalmente para la digitalización de huellas;
+# no ordenar reducirá la cantidad de huellas digitales, pero potencialmente
+# afectará el rendimiento.
 PEAK_SORT = True
 
-# Number of bits to grab from the front of the SHA1 hash in the
-# fingerprint calculation. The more you grab, the more memory storage,
-# with potentially lesser collisions of matches.
+# Número de bits para tomar del frente del hash SHA1 en el
+# cálculo de la huella digital. Cuantos más tomes, más almacenamiento en memoria,
+# con potencialmente menos colisiones de coincidencias.
 FINGERPRINT_REDUCTION = int(os.getenv('DJV_FINGERPRINT_REDUCTION', 20))
 
-# Number of results being returned for file recognition
+# Número de resultados que se devuelven para el reconocimiento de archivos
 TOPN = int(os.getenv('DJV_TOPN', 2))

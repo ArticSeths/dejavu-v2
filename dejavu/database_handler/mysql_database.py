@@ -7,6 +7,7 @@ from dejavu.base_classes.common_database import CommonDatabase
 from dejavu.config.settings import (FIELD_FILE_SHA1, FIELD_FINGERPRINTED,
                                     FIELD_HASH, FIELD_OFFSET, FIELD_SONG_ID,
                                     FIELD_SONGNAME, FIELD_TOTAL_HASHES,
+                                    FIELD_AUDIO_DURATION,
                                     FINGERPRINTS_TABLENAME, SONGS_TABLENAME)
 
 
@@ -21,6 +22,7 @@ class MySQLDatabase(CommonDatabase):
         ,   `{FIELD_FINGERPRINTED}` TINYINT DEFAULT 0
         ,   `{FIELD_FILE_SHA1}` BINARY(20) NOT NULL
         ,   `{FIELD_TOTAL_HASHES}` INT NOT NULL DEFAULT 0
+        ,   `{FIELD_AUDIO_DURATION}` INT NOT NULL DEFAULT 0
         ,   `date_created` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
         ,   `date_modified` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         ,   CONSTRAINT `pk_{SONGS_TABLENAME}_{FIELD_SONG_ID}` PRIMARY KEY (`{FIELD_SONG_ID}`)
@@ -53,8 +55,8 @@ class MySQLDatabase(CommonDatabase):
     """
 
     INSERT_SONG = f"""
-        INSERT INTO `{SONGS_TABLENAME}` (`{FIELD_SONGNAME}`,`{FIELD_FILE_SHA1}`,`{FIELD_TOTAL_HASHES}`)
-        VALUES (%s, UNHEX(%s), %s);
+        INSERT INTO `{SONGS_TABLENAME}` (`{FIELD_SONGNAME}`,`{FIELD_FILE_SHA1}`,`{FIELD_TOTAL_HASHES}`,`{FIELD_AUDIO_DURATION}`)
+        VALUES (%s, UNHEX(%s), %s, %s);
     """
 
     # SELECTS
@@ -73,7 +75,7 @@ class MySQLDatabase(CommonDatabase):
     SELECT_ALL = f"SELECT `{FIELD_SONG_ID}`, `{FIELD_OFFSET}` FROM `{FINGERPRINTS_TABLENAME}`;"
 
     SELECT_SONG = f"""
-        SELECT `{FIELD_SONGNAME}`, HEX(`{FIELD_FILE_SHA1}`) AS `{FIELD_FILE_SHA1}`, `{FIELD_TOTAL_HASHES}`
+        SELECT `{FIELD_SONGNAME}`, HEX(`{FIELD_FILE_SHA1}`) AS `{FIELD_FILE_SHA1}`, `{FIELD_TOTAL_HASHES}`,`{FIELD_AUDIO_DURATION}`
         FROM `{SONGS_TABLENAME}`
         WHERE `{FIELD_SONG_ID}` = %s;
     """
@@ -92,6 +94,7 @@ class MySQLDatabase(CommonDatabase):
         ,   `{FIELD_SONGNAME}`
         ,   HEX(`{FIELD_FILE_SHA1}`) AS `{FIELD_FILE_SHA1}`
         ,   `{FIELD_TOTAL_HASHES}`
+        ,   `{FIELD_AUDIO_DURATION}`
         ,   `date_created`
         FROM `{SONGS_TABLENAME}`
         WHERE `{FIELD_FINGERPRINTED}` = 1;
@@ -126,7 +129,7 @@ class MySQLDatabase(CommonDatabase):
     def after_fork(self) -> None:
         Cursor.clear_cache()
 
-    def insert_song(self, song_name: str, file_hash: str, total_hashes: int) -> int:
+    def insert_song(self, song_name: str, file_hash: str, total_hashes: int, audio_duration: int) -> int:
         """
         Inserts a song name into the database, returns the new
         identifier of the song.
@@ -134,10 +137,11 @@ class MySQLDatabase(CommonDatabase):
         :param song_name: The name of the song.
         :param file_hash: Hash from the fingerprinted file.
         :param total_hashes: amount of hashes to be inserted on fingerprint table.
+        :param audio_duration: duration of the audio file in milliseconds.
         :return: the inserted id.
         """
         with self.cursor() as cur:
-            cur.execute(self.INSERT_SONG, (song_name, file_hash, total_hashes))
+            cur.execute(self.INSERT_SONG, (song_name, file_hash, total_hashes, audio_duration))
             return cur.lastrowid
 
     def __getstate__(self):

@@ -121,7 +121,7 @@ class CommonDatabase(BaseDatabase, metaclass=abc.ABCMeta):
             cur.execute(self.INSERT_FINGERPRINT, (fingerprint, song_id, offset))
 
     @abc.abstractmethod
-    def insert_song(self, song_name: str, file_hash: str, total_hashes: int) -> int:
+    def insert_song(self, song_name: str, file_hash: str, total_hashes: int, audio_duration: int) -> int:
         """
         Inserts a song name into the database, returns the new
         identifier of the song.
@@ -129,6 +129,7 @@ class CommonDatabase(BaseDatabase, metaclass=abc.ABCMeta):
         :param song_name: The name of the song.
         :param file_hash: Hash from the fingerprinted file.
         :param total_hashes: amount of hashes to be inserted on fingerprint table.
+        :param audio_duration: duration of the audio file in milliseconds.
         :return: the inserted id.
         """
         pass

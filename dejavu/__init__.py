@@ -10,7 +10,7 @@ import dejavu.logic.decoder as decoder
 from dejavu.base_classes.base_database import get_database
 from dejavu.config.settings import (DEFAULT_FS, DEFAULT_OVERLAP_RATIO,
                                     DEFAULT_WINDOW_SIZE, FIELD_FILE_SHA1,
-                                    FIELD_TOTAL_HASHES,
+                                    FIELD_TOTAL_HASHES, FIELD_AUDIO_DURATION,
                                     FINGERPRINTED_CONFIDENCE,
                                     FINGERPRINTED_HASHES, HASHES_MATCHED,
                                     INPUT_CONFIDENCE, INPUT_HASHES, OFFSET,
@@ -99,7 +99,7 @@ class Dejavu:
         # Loop till we have all of them
         while True:
             try:
-                song_name, hashes, file_hash = next(iterator)
+                song_name, hashes, file_hash, song_duration = next(iterator)
             except multiprocessing.TimeoutError:
                 continue
             except StopIteration:
@@ -109,7 +109,7 @@ class Dejavu:
                 # Print traceback because we can't reraise it here
                 traceback.print_exc(file=sys.stdout)
             else:
-                sid = self.db.insert_song(song_name, file_hash, len(hashes))
+                sid = self.db.insert_song(song_name, file_hash, len(hashes), song_duration)
 
                 self.db.insert_hashes(sid, hashes)
                 self.db.set_song_fingerprinted(sid)
@@ -133,10 +133,10 @@ class Dejavu:
         if song_hash in self.songhashes_set:
             print(f"{song_name} already fingerprinted, continuing...")
         else:
-            song_name, hashes, file_hash = Dejavu._fingerprint_worker(
+            song_name, hashes, file_hash, song_duration = Dejavu._fingerprint_worker(
                 (file_path, self.limit, song_name)
             )
-            sid = self.db.insert_song(song_name, file_hash, len(hashes))
+            sid = self.db.insert_song(song_name, file_hash, len(hashes), song_duration)
 
             self.db.insert_hashes(sid, hashes)
             self.db.set_song_fingerprinted(sid)
@@ -197,6 +197,7 @@ class Dejavu:
 
             song_name = song.get(SONG_NAME, None)
             song_hashes = song.get(FIELD_TOTAL_HASHES, None)
+            song_duration = song.get(FIELD_AUDIO_DURATION, None)
             nseconds = round(float(offset) / DEFAULT_FS * DEFAULT_WINDOW_SIZE * DEFAULT_OVERLAP_RATIO, 5)
             hashes_matched = dedup_hashes[song_id]
 
@@ -236,13 +237,13 @@ class Dejavu:
         except ValueError:
             pass
 
-        fingerprints, file_hash = Dejavu.get_file_fingerprints(file_name, limit, print_output=True)
+        fingerprints, file_hash, song_duration = Dejavu.get_file_fingerprints(file_name, limit, print_output=True)
 
-        return song_name, fingerprints, file_hash
+        return song_name, fingerprints, file_hash, song_duration
 
     @staticmethod
     def get_file_fingerprints(file_name: str, limit: int, print_output: bool = False):
-        channels, fs, file_hash = decoder.read(file_name, limit)
+        channels, fs, file_hash, song_duration  = decoder.read(file_name, limit)
         fingerprints = set()
         channel_amount = len(channels)
         for channeln, channel in enumerate(channels, start=1):
@@ -256,4 +257,4 @@ class Dejavu:
 
             fingerprints |= set(hashes)
 
-        return fingerprints, file_hash
+        return fingerprints, file_hash, song_duration

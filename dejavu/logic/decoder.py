@@ -68,6 +68,7 @@ def read(file_name: str, limit: int = None) -> Tuple[List[List[int]], int, str]:
     # pydub does not support 24-bit wav files, use wavio when this occurs
     try:
         audiofile = AudioSegment.from_file(file_name)
+        song_duration = len(audiofile)
 
         if limit:
             audiofile = audiofile[:limit * 1000]
@@ -88,11 +89,12 @@ def read(file_name: str, limit: int = None) -> Tuple[List[List[int]], int, str]:
         audiofile = audiofile.T
         audiofile = audiofile.astype(np.int16)
 
+        song_duration = len(audiofile[0]) / audiofile[1][0]
         channels = []
         for chn in audiofile:
             channels.append(chn)
 
-    return channels, audiofile.frame_rate, unique_hash(file_name)
+    return channels, audiofile.frame_rate, unique_hash(file_name), song_duration
 
 
 def get_audio_name_from_path(file_path: str) -> str:
