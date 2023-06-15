@@ -1,4 +1,5 @@
 # Dejavu
+import os
 
 # DEJAVU JSON RESPONSE
 SONG_ID = "song_id"
