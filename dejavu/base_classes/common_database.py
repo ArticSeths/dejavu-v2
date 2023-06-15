@@ -2,6 +2,10 @@ import abc
 from typing import Dict, List, Tuple
 
 from dejavu.base_classes.base_database import BaseDatabase
+from dejavu.config.settings import (FINGERPRINTS_TABLENAME, FIELD_SONG_ID,
+                                    FIELD_HASH, FIELD_OFFSET)
+
+                                    
 
 
 class CommonDatabase(BaseDatabase, metaclass=abc.ABCMeta):
@@ -170,8 +174,21 @@ class CommonDatabase(BaseDatabase, metaclass=abc.ABCMeta):
         values = [(song_id, hsh, int(offset)) for hsh, offset in hashes]
 
         with self.cursor() as cur:
+        for index in range(0, len(hashes), batch_size):
+            batch_values = values[index: index + batch_size]
+            batch_values_query = ','.join(['(%s, UNHEX(%s), %s)'] * len(batch_values))
+            query = f"""
+                INSERT IGNORE INTO `{FINGERPRINTS_TABLENAME}` (
+                        `{FIELD_SONG_ID}`
+                    ,   `{FIELD_HASH}`
+                    ,   `{FIELD_OFFSET}`)
+                VALUES {batch_values_query};
+            """
+            cur.execute(query, batch_values)
+        # METODO ANTIGUO
+        """ with self.cursor() as cur:
             for index in range(0, len(hashes), batch_size):
-                cur.executemany(self.INSERT_FINGERPRINT, values[index: index + batch_size])
+                cur.executemany(self.INSERT_FINGERPRINT, values[index: index + batch_size]) """
 
     def return_matches(self, hashes: List[Tuple[str, int]],
                        batch_size: int = 1000) -> Tuple[List[Tuple[int, int]], Dict[int, int]]:
