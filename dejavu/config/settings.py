@@ -54,11 +54,11 @@ FIELD_OFFSET = 'offset'
 # Where 1 sets a diamond morphology which implies that diagonal elements are not considered as neighbors (this
 # is the value used in the original dejavu code).
 # And 2 sets a square mask, i.e. all elements are considered neighbors.
-CONNECTIVITY_MASK = 2
+CONNECTIVITY_MASK = int(os.getenv('DJV_CONNECTIVITY_MASK', 2))
 
 # Sampling rate, related to the Nyquist conditions, which affects
 # the range frequencies we can detect.
-DEFAULT_FS = 44100
+DEFAULT_FS = int(os.getenv('DJV_DEFAULT_FS', 44100))
 
 # Size of the FFT window, affects frequency granularity
 DEFAULT_WINDOW_SIZE = 4096
@@ -96,7 +96,7 @@ PEAK_SORT = True
 # Number of bits to grab from the front of the SHA1 hash in the
 # fingerprint calculation. The more you grab, the more memory storage,
 # with potentially lesser collisions of matches.
-FINGERPRINT_REDUCTION = 20
+FINGERPRINT_REDUCTION = int(os.getenv('DJV_FINGERPRINT_REDUCTION', 20))
 
 # Number of results being returned for file recognition
-TOPN = 2
+TOPN = int(os.getenv('DJV_TOPN', 2))
