@@ -190,7 +190,38 @@ class CommonDatabase(BaseDatabase, metaclass=abc.ABCMeta):
             for index in range(0, len(hashes), batch_size):
                 cur.executemany(self.INSERT_FINGERPRINT, values[index: index + batch_size]) """
 
-    def return_matches(self, hashes: List[Tuple[str, int]],
+    def return_matches(self, hashes: List[Tuple[str, int]]) -> Tuple[List[Tuple[int, int]], Dict[int, int]]:
+        """
+        Searches the database for pairs of (hash, offset) values.
+        """
+        # Create a dictionary of hash => offset pairs for later lookups
+        mapper = {}
+        for hsh, offset in hashes:
+            if hsh.upper() not in mapper:
+                mapper[hsh.upper()] = [offset]
+            else:
+                mapper[hsh.upper()].append(offset)
+        
+        # in order to count each hash only once per db offset we use the dic below
+        dedup_hashes = {}
+        results = []
+        with self.cursor() as cur:
+            # Create our IN part of the query
+            query = self.SELECT_MULTIPLE % ', '.join([self.IN_MATCH] * len(mapper))
+
+            cur.execute(query, list(mapper.keys()))
+
+            for hsh, sid, offset in cur:
+                dedup_hashes[sid] = dedup_hashes.get(sid, 0) + 1
+
+                # we now evaluate all offset for each hash matched
+                for song_sampled_offset in mapper[hsh]:
+                    results.append((sid, offset - song_sampled_offset))
+
+        return results, dedup_hashes
+
+
+    def return_matches_OLD(self, hashes: List[Tuple[str, int]],
                        batch_size: int = 1000) -> Tuple[List[Tuple[int, int]], Dict[int, int]]:
         """
         Searches the database for pairs of (hash, offset) values.

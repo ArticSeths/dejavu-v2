@@ -193,17 +193,21 @@ class Dejavu:
 
         songs_result = []
         for song_id, offset, _ in songs_matches[0:topn]:  # consider topn elements in the result
-            song = self.db.get_song_by_id(song_id)
+            # song = self.db.get_song_by_id(song_id)
 
-            song_name = song.get(SONG_NAME, None)
-            song_hashes = song.get(FIELD_TOTAL_HASHES, None)
-            song_duration = song.get(FIELD_AUDIO_DURATION, None)
+            song_name = None # song.get(SONG_NAME, None)
+            song_hashes = 1 # song.get(FIELD_TOTAL_HASHES, None)
+            song_duration = 0 # song.get(FIELD_AUDIO_DURATION, None)
             nseconds = round(float(offset) / DEFAULT_FS * DEFAULT_WINDOW_SIZE * DEFAULT_OVERLAP_RATIO, 5)
             hashes_matched = dedup_hashes[song_id]
 
+            avg_counts_hashes_matched = round(count * 100 / hashes_matched, 2)
+
             song = {
+                "count": count,
+                "avg_counts_hashes_matched": avg_counts_hashes_matched,
                 SONG_ID: song_id,
-                SONG_NAME: song_name.encode("utf8"),
+                SONG_NAME: '', # song_name.encode("utf8"),
                 INPUT_HASHES: queried_hashes,
                 FINGERPRINTED_HASHES: song_hashes,
                 AUDIO_DURATION: song_duration,
@@ -214,7 +218,7 @@ class Dejavu:
                 FINGERPRINTED_CONFIDENCE: round(hashes_matched / song_hashes, 2),
                 OFFSET: offset,
                 OFFSET_SECS: nseconds,
-                FIELD_FILE_SHA1: song.get(FIELD_FILE_SHA1, None).encode("utf8")
+                FIELD_FILE_SHA1: 0 # song.get(FIELD_FILE_SHA1, None).encode("utf8")
             }
 
             songs_result.append(song)
