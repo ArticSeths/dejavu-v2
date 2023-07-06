@@ -12,6 +12,7 @@ HASHES_MATCHED = 'hashes_matched_in_input'
 FINGERPRINTED_HASHES = 'fingerprinted_hashes_in_db'
 # Porcentaje referente a las huellas coincidentes vs las huellas digitalizadas en la base de datos.
 FINGERPRINTED_CONFIDENCE = 'fingerprinted_confidence'
+RETURN_AUDIO_INFO = bool(int(os.getenv('RETURN_AUDIO_INFO', 1)))
 
 # Huellas generadas desde la entrada.
 INPUT_HASHES = 'input_total_hashes'

@@ -14,7 +14,8 @@ from dejavu.config.settings import (DEFAULT_FS, DEFAULT_OVERLAP_RATIO,
                                     FINGERPRINTED_CONFIDENCE, AUDIO_DURATION,
                                     FINGERPRINTED_HASHES, HASHES_MATCHED,
                                     INPUT_CONFIDENCE, INPUT_HASHES, OFFSET,
-                                    OFFSET_SECS, SONG_ID, SONG_NAME, TOPN)
+                                    OFFSET_SECS, SONG_ID, SONG_NAME, TOPN,
+                                    RETURN_AUDIO_INFO)
 from dejavu.logic.fingerprint import fingerprint
 
 
@@ -193,11 +194,16 @@ class Dejavu:
 
         songs_result = []
         for song_id, offset, count in songs_matches[0:topn]:  # consider topn elements in the result
-            # song = self.db.get_song_by_id(song_id)
+            if (RETURN_AUDIO_INFO):
+                song = self.db.get_song_by_id(song_id)
+                song_name = song.get(SONG_NAME, None)
+                song_hashes = song.get(FIELD_TOTAL_HASHES, None)
+                song_duration = song.get(FIELD_AUDIO_DURATION, None)
+            else:
+                song_name = ""
+                song_hashes = 1
+                song_duration = 1
 
-            # song_name = None # song.get(SONG_NAME, None)
-            song_hashes = 1 # song.get(FIELD_TOTAL_HASHES, None)
-            song_duration = 0 # song.get(FIELD_AUDIO_DURATION, None)
             nseconds = round(float(offset) / DEFAULT_FS * DEFAULT_WINDOW_SIZE * DEFAULT_OVERLAP_RATIO, 5)
             hashes_matched = dedup_hashes[song_id]
 
@@ -207,15 +213,15 @@ class Dejavu:
                 "count": count,
                 "avg_counts_hashes_matched": avg_counts_hashes_matched,
                 SONG_ID: song_id,
-                SONG_NAME: '', # song_name.encode("utf8"),
+                SONG_NAME: song_name,
                 INPUT_HASHES: queried_hashes,
                 FINGERPRINTED_HASHES: song_hashes,
                 AUDIO_DURATION: song_duration,
                 HASHES_MATCHED: hashes_matched,
                 # Percentage regarding hashes matched vs hashes from the input.
-                INPUT_CONFIDENCE: round(hashes_matched / queried_hashes, 2),
+                INPUT_CONFIDENCE: round(hashes_matched / queried_hashes * 100, 2),
                 # Percentage regarding hashes matched vs hashes fingerprinted in the db.
-                FINGERPRINTED_CONFIDENCE: round(hashes_matched / song_hashes, 2),
+                FINGERPRINTED_CONFIDENCE: round(hashes_matched / song_hashes * 100, 2),
                 OFFSET: offset,
                 OFFSET_SECS: nseconds,
                 FIELD_FILE_SHA1: 0 # song.get(FIELD_FILE_SHA1, None).encode("utf8")
