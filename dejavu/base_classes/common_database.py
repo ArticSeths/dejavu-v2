@@ -281,3 +281,75 @@ class CommonDatabase(BaseDatabase, metaclass=abc.ABCMeta):
                 query = self.DELETE_SONGS % ', '.join(['%s'] * len(song_ids[index: index + batch_size]))
 
                 cur.execute(query, song_ids[index: index + batch_size])
+
+    def return_matches_chunk(self, hashes_group, options) -> Tuple[List[Tuple[int, int]], Dict[int, int]]:
+        batch_size = 15000
+        """
+        Searches the database for pairs of (hash, offset) values.
+        """
+        mapperFind = {}
+        for i, hashes in hashes_group.items():
+            mapper = {}
+            for hsh, offset in hashes['hashes']:
+                if hsh.upper() not in mapperFind:
+                    mapperFind[hsh.upper()] = [offset]
+                else:
+                    mapperFind[hsh.upper()].append(offset)
+                
+                if hsh.upper() not in mapper:
+                    mapper[hsh.upper()] = [offset]
+                else:
+                    mapper[hsh.upper()].append(offset)
+            hashes['mapper'] = mapper
+            hashes['hashList'] = list(mapper.keys())
+        
+        # for debug only: cut the number of hashes to be searched to 10
+        # mapperFind = dict(list(mapperFind.items())[:10])
+
+        values = list(mapperFind.keys())
+
+        ddbbResults = []
+        with self.cursor() as cur:
+            rangeSize = range(0, len(values), batch_size)
+            print('rangeSize: {}'.format(len(rangeSize)))
+
+            for index in rangeSize:
+                # PRINT DOTS EACH LOOP
+                print('.', end='', flush=True)
+
+                # Create our IN part of the query
+                song_filter = options.get('song_filter')
+                if song_filter and len(song_filter) > 0:
+                    song_filter_placeholders = ', '.join(['%s'] * len(song_filter))
+                    hash_placeholders = ', '.join([self.IN_MATCH] * len(values[index: index + batch_size]))
+
+                    query = self.SELECT_MULTIPLE_FILTER_SONGS % (song_filter_placeholders, hash_placeholders)
+                    cur.execute(query, song_filter + values[index: index + batch_size])
+                else:
+                    query = self.SELECT_MULTIPLE % ', '.join([self.IN_MATCH] * len(values[index: index + batch_size]))
+                    cur.execute(query, values[index: index + batch_size])
+
+                print(':', end='', flush=True)
+
+                for hsh, sid, offset in cur:
+                    ddbbResults.append((hsh, sid, offset))
+
+        print('ddbbResults: {}'.format(len(ddbbResults)))
+
+        for i, hashes in hashes_group.items():
+            print('processing {} of {}'.format(i, len(hashes_group)))
+            dedup_hashes = {}
+            results = []
+            hashSet = set(hashes['hashList'])
+            filtered_ddbbResults = [(hsh, sid, offset) for hsh, sid, offset in ddbbResults if hsh in hashSet]
+            print('filtered_ddbbResults: {}'.format(len(filtered_ddbbResults)))
+            for hsh, sid, offset in filtered_ddbbResults:
+                dedup_hashes[sid] = dedup_hashes.get(sid, 0) + 1
+                offsetSet = set([offset - song_sampled_offset for song_sampled_offset in hashes['mapper'][hsh]])
+                results.extend([(sid, offset) for offset in offsetSet])
+
+            hashes['matches'] = results
+            hashes['dedup_hashes'] = dedup_hashes
+
+
+        return hashes_group

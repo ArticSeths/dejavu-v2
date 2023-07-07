@@ -104,3 +104,8 @@ FINGERPRINT_REDUCTION = int(os.getenv('DJV_FINGERPRINT_REDUCTION', 20))
 
 # Número de resultados que se devuelven para el reconocimiento de archivos
 TOPN = int(os.getenv('DJV_TOPN', 2))
+
+# Configuración de procesamiento por chunks
+CHUNK_SIZE = int(os.getenv('DJV_CHUNK_SIZE', 10))
+CHUNK_OVERLAP = int(os.getenv('DJV_CHUNK_OVERLAP', 0))
+CHUNK_WORKERS = int(os.getenv('DJV_CHUNK_WORKERS', 10))

@@ -72,6 +72,12 @@ class MySQLDatabase(CommonDatabase):
         WHERE `{FIELD_HASH}` IN (%s);
     """
 
+    SELECT_MULTIPLE_FILTER_SONGS = f"""
+        SELECT HEX(`{FIELD_HASH}`), `{FIELD_SONG_ID}`, `{FIELD_OFFSET}`
+        FROM `{FINGERPRINTS_TABLENAME}`
+        WHERE `{FIELD_SONG_ID}` IN (%s) AND `{FIELD_HASH}` IN (%s);
+    """
+
     SELECT_ALL = f"SELECT `{FIELD_SONG_ID}`, `{FIELD_OFFSET}` FROM `{FINGERPRINTS_TABLENAME}`;"
 
     SELECT_SONG = f"""

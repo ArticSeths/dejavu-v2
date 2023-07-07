@@ -171,6 +171,21 @@ class Dejavu:
 
         return matches, dedup_hashes, query_time
 
+    def find_matches_chunk(self, hashes_group, options) -> Tuple[List[Tuple[int, int]], Dict[str, int], float]:
+        """
+        Finds the corresponding matches on the fingerprinted audios for the given hashes.
+
+        :param hashes: list of tuples for hashes and their corresponding offsets
+        :return: a tuple containing the matches found against the db, a dictionary which counts the different
+         hashes matched for each song (with the song id as key), and the time that the query took.
+
+        """
+        t = time()
+        results = self.db.return_matches_chunk(hashes_group, options)
+        query_time = time() - t
+
+        return results, query_time
+
     def align_matches(self, matches: List[Tuple[int, int]], dedup_hashes: Dict[str, int], queried_hashes: int,
                       topn: int = TOPN) -> List[Dict[str, any]]:
         """
